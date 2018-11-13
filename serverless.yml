@@ -1,0 +1,42 @@
+service: aws-nodejs # NOTE: update this with your service name
+provider:
+  name: aws
+  runtime: nodejs8.10
+  region: eu-west-1
+  environment:
+    DYNAMODB_TABLE: ${self:service}-${opt:stage, self:provider.stage}
+  iamRoleStatements:
+  - Effect: Allow
+    Action:
+      - dynamodb:Query
+      - dynamodb:Scan
+      - dynamodb:GetItem
+      - dynamodb:PutItem
+      - dynamodb:UpdateItem
+      - dynamodb:DeleteItem
+    Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/foodTable"
+functions:
+  food:
+    handler: food.remind
+    events:
+      - alexaSkill:
+          appId: amzn1.ask.skill.a12d297f-ab71-45c9-a0cb-b77a6d0cdef6
+  foodGet:
+    handler: food.get
+    events:
+      - http: get food
+resources:
+    Resources:
+      foodTable:
+          Type: AWS::DynamoDB::Table
+          Properties:
+            TableName: foodTable
+            AttributeDefinitions:
+              - AttributeName: name
+                AttributeType: S
+            KeySchema:
+              - AttributeName: name
+                KeyType: HASH
+            ProvisionedThroughput:
+              ReadCapacityUnits: 1
+              WriteCapacityUnits: 1
